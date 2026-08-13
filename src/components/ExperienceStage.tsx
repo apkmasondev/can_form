@@ -43,6 +43,7 @@ const emptySnapshot: DebugSnapshot = {
   calls: 0,
   camera: '0, 0, 0',
   light: '0, 0',
+  label: 'noir / 1.00',
 }
 
 const chapterTitles = ['Product, reformed', 'Surface', 'Identity', 'Open', 'Ready to pour']
@@ -60,6 +61,16 @@ function updateCopy(element: HTMLElement | null, opacity: number) {
   element.style.visibility = opacity > 0.002 ? 'visible' : 'hidden'
 }
 
+function frameAtProgress(video: HTMLVideoElement, progress: number, start: number, end: number) {
+  if (!Number.isFinite(video.duration) || video.duration <= 0) return null
+  const lastIndex = Math.max(1, Math.round(video.duration * filmFps) - 1)
+  const frame = Math.round(inverseLerp(start, end, progress) * lastIndex)
+  return {
+    frame,
+    time: Math.min(video.duration - 0.5 / filmFps, frame / filmFps),
+  }
+}
+
 /**
  * Maps eased scroll progress onto an exact 24 fps frame index and seeks the
  * paused element there. Frame indices are compared instead of raw times so a
@@ -68,15 +79,13 @@ function updateCopy(element: HTMLElement | null, opacity: number) {
 function syncVideo(video: HTMLVideoElement | null, progress: number, start: number, end: number, lastFrame: { current: number }) {
   if (!video || !video.src) return 0
   if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return 0
-  if (!Number.isFinite(video.duration) || video.duration <= 0) return 0
-  const lastIndex = Math.max(1, Math.round(video.duration * filmFps) - 1)
-  const frame = Math.round(inverseLerp(start, end, progress) * lastIndex)
-  const time = Math.min(video.duration - 0.5 / filmFps, frame / filmFps)
-  if (frame !== lastFrame.current) {
-    lastFrame.current = frame
-    if (Math.abs(video.currentTime - time) > 0.5 / filmFps) video.currentTime = time
+  const target = frameAtProgress(video, progress, start, end)
+  if (!target) return 0
+  if (target.frame !== lastFrame.current) {
+    lastFrame.current = target.frame
+    if (Math.abs(video.currentTime - target.time) > 0.5 / filmFps) video.currentTime = target.time
   }
-  return time
+  return target.time
 }
 
 export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(function ExperienceStage({
@@ -363,6 +372,25 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
   const markVideoReady = (video: HTMLVideoElement | null) => video?.classList.add('is-frame-ready')
   const markVideoError = (layer: HTMLDivElement | null) => layer?.classList.add('has-error')
 
+  const primeVideoFrame = (video: HTMLVideoElement | null, kind: 1 | 2) => {
+    if (!video) return
+    const range = kind === 1 ? timeline.film1Scrub : timeline.film2Scrub
+    const target = frameAtProgress(video, targetProgress.current, range[0], range[1])
+    if (!target) return
+    const lastFrame = kind === 1 ? film1LastFrame : film2LastFrame
+    lastFrame.current = target.frame
+
+    // `loadeddata` only guarantees that frame 0 is decoded. A replacement
+    // Film 1 is normally entered in reverse from the configurator, so exposing
+    // it now would flash its first frame over the correct end poster. Keep the
+    // video transparent until the exact boundary frame has been decoded.
+    if (Math.abs(video.currentTime - target.time) <= 0.5 / filmFps) {
+      markVideoReady(video)
+    } else {
+      video.currentTime = target.time
+    }
+  }
+
   return (
     <div ref={wrapperRef} className="experience-scroll" id="top">
       <div ref={stageRef} className="experience-stage" data-chapter="0" data-quality={runtimeQuality.toLowerCase()}>
@@ -381,7 +409,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
           endPosterRef={film1EndPosterRef}
           startPoster={filmVariants.noir.one.start}
           endPoster={filmVariants.noir.one.end}
-          onReady={() => markVideoReady(film1VideoRef.current)}
+          onLoadedData={() => primeVideoFrame(film1VideoRef.current, 1)}
+          onSeeked={() => markVideoReady(film1VideoRef.current)}
           onError={() => markVideoError(film1LayerRef.current)}
         />
         <VideoLayer
@@ -392,7 +421,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
           endPosterRef={film2EndPosterRef}
           startPoster={filmVariants.noir.two.start}
           endPoster={filmVariants.noir.two.end}
-          onReady={() => markVideoReady(film2VideoRef.current)}
+          onLoadedData={() => primeVideoFrame(film2VideoRef.current, 2)}
+          onSeeked={() => markVideoReady(film2VideoRef.current)}
           onError={() => markVideoError(film2LayerRef.current)}
           deferPosters
         />

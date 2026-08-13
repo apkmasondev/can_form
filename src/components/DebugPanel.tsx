@@ -39,6 +39,7 @@ export function DebugPanel({ snapshot }: { snapshot: DebugSnapshot }) {
         <code>{snapshot.fps} fps / DPR {snapshot.dpr} / {snapshot.quality}</code>
         <code>{snapshot.triangles.toLocaleString()} tris / {snapshot.calls} calls</code>
         <code>light {snapshot.light}</code>
+        <code>label {snapshot.label}</code>
         <label>
           Reference
           <select value={reference} onChange={(event) => setReference(event.target.value as keyof typeof references)}>

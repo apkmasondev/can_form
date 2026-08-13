@@ -8,12 +8,13 @@ type VideoLayerProps = {
   endPosterRef: RefObject<HTMLImageElement | null>
   startPoster: string
   endPoster: string
-  onReady: () => void
+  onLoadedData: () => void
+  onSeeked: () => void
   onError: () => void
   deferPosters?: boolean
 }
 
-export function VideoLayer({ id, videoRef, layerRef, startPosterRef, endPosterRef, startPoster, endPoster, onReady, onError, deferPosters = false }: VideoLayerProps) {
+export function VideoLayer({ id, videoRef, layerRef, startPosterRef, endPosterRef, startPoster, endPoster, onLoadedData, onSeeked, onError, deferPosters = false }: VideoLayerProps) {
   return (
     <div ref={layerRef} className={`video-layer video-layer--${id}`} aria-hidden="true">
       <img ref={startPosterRef} className="video-poster video-poster--start" src={deferPosters ? undefined : startPoster} data-src={startPoster} alt="" decoding="async" />
@@ -26,8 +27,8 @@ export function VideoLayer({ id, videoRef, layerRef, startPosterRef, endPosterRe
         preload="none"
         disablePictureInPicture
         tabIndex={-1}
-        onLoadedData={onReady}
-        onSeeked={onReady}
+        onLoadedData={onLoadedData}
+        onSeeked={onSeeked}
         onError={onError}
       />
     </div>

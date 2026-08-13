@@ -24,6 +24,7 @@ export type RenderStats = {
   calls: number
   camera: string
   light: string
+  label: string
 }
 
 export type ExportMetadata = {
@@ -122,6 +123,8 @@ export class CanExperience {
   private currentTextureCustom = false
   private nextTextureCustom = false
   private transitionElapsed = 0
+  private activeVariant: VariantId = 'noir'
+  private printStrength = 1
   private finishTarget = finishes.satin
   private userRotation = 0
   private dragVelocity = 0
@@ -358,6 +361,7 @@ export class CanExperience {
       if (custom) texture.dispose()
       return
     }
+    this.activeVariant = id
     if (texture === this.nextTexture) return
     if (texture === this.currentTexture && !this.nextTexture) return
 
@@ -626,16 +630,20 @@ export class CanExperience {
       if (mix >= 0.999) this.completeTextureTransition()
     }
 
-    // The printed label fades to bare aluminum whenever a cinematic owns the
-    // frame, so the handover never shows two different labels at once.
+    // Film 1 is always the original Noir sequence, so its early hand-off keeps
+    // the neutralisation used by the initial campaign. Film 2 now has matching
+    // Noir, Lime and Cherry renders: those identities must retain their colour
+    // right through the cut. Only Zero and arbitrary Custom artwork use the
+    // deliberate Noir fallback and therefore neutralise before Film 2.
     let printStrength = 1
     if (progress > 0.115 && progress < 0.43) {
       printStrength = 1 - smoothstep(0.115, 0.16, progress) + smoothstep(0.405, 0.445, progress)
-    } else if (progress >= 0.625 && progress < 0.96) {
+    } else if ((this.activeVariant === 'zero' || this.activeVariant === 'custom') && progress >= 0.625 && progress < 0.96) {
       printStrength = 1 - smoothstep(0.625, 0.675, progress) + smoothstep(0.92, 0.965, progress)
     }
+    this.printStrength = clamp(printStrength)
     const printUniform = this.shader?.uniforms.uPrintStrength
-    if (printUniform) printUniform.value = clamp(printStrength)
+    if (printUniform) printUniform.value = this.printStrength
   }
 
   private trackPerformance(delta: number, progress: number) {
@@ -670,6 +678,7 @@ export class CanExperience {
       calls: this.renderer.info.render.calls,
       camera: `${this.camera.position.x.toFixed(2)}, ${this.camera.position.y.toFixed(2)}, ${this.camera.position.z.toFixed(2)}`,
       light: `${this.pointerLightCurrent.x.toFixed(2)}, ${this.pointerLightCurrent.y.toFixed(2)}`,
+      label: `${this.activeVariant} / ${this.printStrength.toFixed(2)}`,
     }
   }
 
