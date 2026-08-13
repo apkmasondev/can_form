@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react'
 import { filmVariantFor, filmVariants, type FilmSequenceAssets, type FilmVariantId } from '../config/films'
+import { filmRenditionFor } from '../config/mediaQuality'
 import { activeChapter, calibrationPoints, chapterCount, clamp, filmFps, inverseLerp, rangeOpacity, smoothstep, timeline } from '../config/timeline'
 import type { FinishId, VariantId } from '../config/variants'
 import type { ExperiencePreferences, QualityTier } from '../hooks/usePreferences'
@@ -150,7 +151,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
     setPosterSource(kind === 1 ? film1EndPosterRef.current : film2EndPosterRef.current, sequence.end)
     if (!video || preferences.reducedMotion || !cinematicEnabled) return
     const assigned = kind === 1 ? film1Assigned : film2Assigned
-    const sourceKey = `${requested}-${preferences.mobile ? 'mobile' : 'desktop'}`
+    const rendition = filmRenditionFor(preferences.mobile, runtimeQuality)
+    const sourceKey = `${requested}-${rendition}`
     if (assigned.current === sourceKey) return
     assigned.current = sourceKey
     const layer = kind === 1 ? film1LayerRef.current : film2LayerRef.current
@@ -159,7 +161,7 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
     layer?.classList.remove('has-error')
     video.classList.remove('is-frame-ready')
     video.preload = 'auto'
-    video.src = preferences.mobile ? sequence.mobile : sequence.desktop
+    video.src = sequence[rendition]
     video.load()
   }
 
@@ -176,7 +178,7 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
     assignVideoSource(film2VideoRef.current, 2, next)
     const reverseLoad = window.setTimeout(() => assignVideoSource(film1VideoRef.current, 1, next), 320)
     return () => window.clearTimeout(reverseLoad)
-  }, [selectedVariant, cinematicEnabled, preferences.mobile, preferences.reducedMotion])
+  }, [selectedVariant, cinematicEnabled, preferences.mobile, preferences.reducedMotion, runtimeQuality])
 
   useImperativeHandle(forwardedRef, () => ({
     setTexture: async (url, id) => {

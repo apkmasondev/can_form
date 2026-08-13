@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import fallbackPoster from '../assets/media/can-film-01-end.webp'
 import { Configurator, type TextureStatus } from '../components/Configurator'
 import { ExperienceStage, type StageHandle } from '../components/ExperienceStage'
+import { filmRenditionFor } from '../config/mediaQuality'
 import { variants, type FinishId, type VariantId } from '../config/variants'
 import { usePreferences, type QualityTier } from '../hooks/usePreferences'
 
@@ -20,6 +21,7 @@ export function App() {
   const [cinematicEnabled, setCinematicEnabled] = useState(!preferences.saveData)
   const [runtimeQuality, setRuntimeQuality] = useState<QualityTier>(preferences.quality)
   const [textureStatus, setTextureStatus] = useState<TextureStatus>({ state: 'idle' })
+  const filmRendition = filmRenditionFor(preferences.mobile, runtimeQuality)
 
   useEffect(() => {
     document.documentElement.dataset.motion = preferences.reducedMotion ? 'reduced' : 'full'
@@ -112,7 +114,7 @@ export function App() {
         {preferences.saveData && !cinematicEnabled ? (
           <button className="data-saver-prompt" type="button" onClick={() => setCinematicEnabled(true)}>
             <span className="data-saver-prompt__label">Cinematic media paused</span>
-            <span className="data-saver-prompt__action">Load films · {preferences.mobile ? filmWeight.mobile : filmWeight.desktop}</span>
+            <span className="data-saver-prompt__action">Load films · {filmWeight[filmRendition]}</span>
           </button>
         ) : null}
 
