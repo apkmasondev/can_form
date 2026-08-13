@@ -1,0 +1,46 @@
+{
+  "triangles": 38184,
+  "meshes": [
+    {
+      "name": "Body",
+      "triangles": 20480
+    },
+    {
+      "name": "Top",
+      "triangles": 2560
+    },
+    {
+      "name": "Rim",
+      "triangles": 3840
+    },
+    {
+      "name": "TopPanel",
+      "triangles": 1344
+    },
+    {
+      "name": "InnerOpening",
+      "triangles": 768
+    },
+    {
+      "name": "ScorePanel",
+      "triangles": 668
+    },
+    {
+      "name": "Rivet",
+      "triangles": 360
+    },
+    {
+      "name": "Tab",
+      "triangles": 3364
+    },
+    {
+      "name": "Bottom",
+      "triangles": 960
+    },
+    {
+      "name": "BottomRim",
+      "triangles": 3840
+    }
+  ],
+  "uv": "Body U=circumference, V=height, seam=rear"
+}

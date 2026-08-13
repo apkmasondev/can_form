@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+playwright-report/
+test-results/
+performance-results/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.*.local
+
+# Uncompressed camera masters. Only the processed renditions in
+# src/assets/media/ are part of the deployed bundle.
+/Aluminum_can_product_video_*.mp4
+/Camera_pushing_*.mp4
+src/assets/models/*.raw.glb

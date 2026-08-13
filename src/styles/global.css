@@ -1,0 +1,179 @@
+:root {
+  color-scheme: dark;
+
+  /* Ink ramp. Every step is verified above 4.5:1 on the #080808 stage so the
+     micro-typography stays legible without lightening the whole design. */
+  --ink: #f2f0ea;
+  --ink-2: #cbc9c2;
+  --ink-3: #a9a8a2;
+  --ink-4: #8f8e89;
+  --accent: #e7e4dc;
+  --danger: #f0a79c;
+  --positive: #b9d6b3;
+
+  --page: #080808;
+  --surface: rgba(12, 12, 12, 0.86);
+  --surface-solid: #101010;
+  --hairline: rgba(240, 238, 232, 0.16);
+  --hairline-strong: rgba(240, 238, 232, 0.32);
+
+  /* Micro-type used for all uppercase technical labels. */
+  --micro: 10px;
+  --micro-tracking: 0.14em;
+  --label-tracking: 0.18em;
+
+  /* Everything is square. Rounded cards are the single strongest "generic
+     dashboard" signal; a canning line does not round its corners either. */
+  --radius: 0px;
+  --tick: 14px;
+
+  --ease-out: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.28, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+
+  /* Two voices: a tight grotesk for display, and the platform monospace for
+     every number, code and machine label. Both are already on the device, so
+     the "no third-party runtime request" rule still holds. */
+  --sans: "Helvetica Neue", "Neue Haas Grotesk Text Pro", Inter, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+
+  color: var(--ink);
+  background: var(--page);
+  font-family: var(--sans);
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Machine label: the shared recipe for every uppercase technical string. */
+.mono,
+.eyebrow,
+.control-label,
+.button,
+.link-button,
+.header-meta,
+.stage-footer,
+.chapter-progress,
+.upload-note,
+.status-line,
+.data-saver-prompt,
+.scroll-cue,
+.loading-screen small,
+.loading-screen__mark {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "kern" 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--page);
+  scroll-behavior: auto;
+  /* The scrollbar is suppressed on purpose: the stage is a fixed cinematic
+     frame and a native bar cuts a bright strip down the right edge of every
+     film grade. Scrolling itself is untouched — wheel, trackpad, touch,
+     keyboard and Home/End all still drive the timeline, and the chapter index
+     on the right reports position in its place. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  color: var(--ink);
+  background: var(--page);
+  overflow-x: clip;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+button,
+input,
+select {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  border: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  color: #0a0a0a;
+  background: var(--accent);
+}
+
+/* A single ring that stays visible on both the dark stage and the light
+   primary buttons. Outline only — a box-shadow ring would overwrite the
+   sheen and edge highlights the controls are built from. */
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+noscript {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  color: var(--ink);
+  background: var(--page);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

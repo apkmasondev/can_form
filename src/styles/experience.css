@@ -1,0 +1,1604 @@
+/* ==========================================================================
+   Stage scaffolding
+   ========================================================================== */
+
+.experience-scroll {
+  position: relative;
+  height: 900svh;
+  min-height: 900vh;
+  background: var(--page);
+}
+
+.experience-stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--page);
+}
+
+.webgl-canvas,
+.video-layer,
+.atmosphere,
+.grain,
+.webgl-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.webgl-canvas {
+  z-index: 1;
+  display: block;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.video-layer {
+  z-index: 2;
+  visibility: hidden;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--page);
+  will-change: opacity;
+}
+
+.video-layer--two {
+  z-index: 3;
+}
+
+.video-poster,
+.cinematic-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+.video-poster {
+  transition: none;
+}
+
+.cinematic-video {
+  opacity: 0;
+}
+
+.cinematic-video.is-frame-ready {
+  opacity: 1;
+}
+
+.video-layer.has-error .cinematic-video {
+  display: none;
+}
+
+.atmosphere {
+  z-index: 4;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 43%, transparent 0, transparent 28%, rgba(0, 0, 0, 0.12) 58%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.16));
+}
+
+.grain {
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+}
+
+/* ==========================================================================
+   Shared primitives
+   ========================================================================== */
+
+.eyebrow,
+.control-label {
+  display: block;
+  color: var(--ink-3);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Diagonal corner ticks. Two pseudo-elements draw an L at the top-left and
+   bottom-right, the crop-mark motif from a print spec sheet. Used instead of
+   full rounded borders, which is what made every panel read as a stock card. */
+.ticked {
+  position: relative;
+}
+
+.ticked::before,
+.ticked::after {
+  position: absolute;
+  width: var(--tick);
+  height: var(--tick);
+  content: "";
+  pointer-events: none;
+  opacity: 0.85;
+  transition: width var(--dur-slow) var(--ease-out), height var(--dur-slow) var(--ease-out);
+}
+
+.ticked::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+
+.ticked::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+}
+
+/* Machined tag, not a filled chip.
+ *
+ * At rest the button has no fill at all — it is a hairline plate with a cut
+ * corner and a divided icon cell, so nothing on the page sits there as a plain
+ * white rectangle. The aluminium is the reward for reaching for it: a brushed
+ * plate wipes across on hover and the label inverts once it has passed. The cut
+ * corner echoes the crop ticks on the configurator. */
+.button {
+  --chamfer: 9px;
+
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  isolation: isolate;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%);
+  color: var(--ink);
+  background: transparent;
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 180ms var(--ease-out) 130ms, transform var(--dur-fast) var(--ease-out);
+}
+
+/* Resting plate: an edge and a barely-there tint, nothing else. */
+.button::before {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  content: "";
+  background-color: rgba(240, 238, 232, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(240, 238, 232, 0.24);
+  transition: box-shadow var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+
+/* Brushed aluminium, held off-stage until hover. The fine repeating stripe is
+   the grain; the wide diagonal is the specular sweep across it. */
+.button::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0 1px, rgba(255, 255, 255, 0) 1px 3px),
+    linear-gradient(100deg, #c9c6bc 0%, #eeece4 30%, #fffefb 46%, #efece4 62%, #c6c3b9 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 440ms var(--ease-out);
+}
+
+/* An icon cell reaches the right edge itself, so the plate drops its own right
+   padding whenever one is present. */
+.button:has(.button__icon) {
+  padding-right: 0;
+}
+
+.button > span {
+  display: grid;
+  place-items: center;
+}
+
+/* The icon sits in its own cell behind a rule, the way a plant label separates
+   a code from its symbol. */
+.button__icon {
+  align-self: stretch;
+  min-width: 46px;
+  padding-right: var(--chamfer);
+  border-left: 1px solid rgba(240, 238, 232, 0.2);
+  font-size: 12px;
+  transition: transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  color: #0b0b0b;
+}
+
+.button:hover:not(:disabled)::after {
+  transform: scaleX(1);
+}
+
+.button:hover:not(:disabled) .button__icon {
+  border-left-color: rgba(0, 0, 0, 0.22);
+}
+
+.button--primary::before {
+  background-color: rgba(240, 238, 232, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(240, 238, 232, 0.52);
+}
+
+.button--primary:hover:not(:disabled) .button__icon {
+  transform: translate3d(2px, -2px, 0);
+}
+
+/* Secondary sits a step down: dimmer edge, dimmer label, and no metal — the
+   wipe is reserved for the primary action on each surface. */
+.button--ghost {
+  min-width: auto;
+  color: var(--ink-2);
+  transition-delay: 0s;
+}
+
+.button--ghost::before {
+  background-color: rgba(240, 238, 232, 0.02);
+  box-shadow: inset 0 0 0 1px rgba(240, 238, 232, 0.18);
+}
+
+.button--ghost::after {
+  background-image: linear-gradient(to bottom, rgba(240, 238, 232, 0.15), rgba(240, 238, 232, 0.06));
+}
+
+.button--ghost:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.button--ghost:hover:not(:disabled)::before {
+  box-shadow: inset 0 0 0 1px rgba(240, 238, 232, 0.45);
+}
+
+.button--ghost:hover:not(:disabled) .button__icon {
+  border-left-color: rgba(240, 238, 232, 0.34);
+  transform: translate3d(0, 2px, 0);
+}
+
+.button:active:not(:disabled) {
+  transform: translate3d(0, 1px, 0);
+}
+
+/* clip-path also clips the focus outline, so the ring is drawn inside the plate
+   instead. It stays visible against both the empty and the filled state. */
+.button:focus-visible {
+  outline: none;
+}
+
+.button:focus-visible::before {
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 238, 232, 0.52),
+    inset 0 0 0 3px var(--page),
+    inset 0 0 0 4px var(--accent);
+}
+
+.link-button {
+  position: relative;
+  padding: 0;
+  color: var(--ink-3);
+  background: transparent;
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.link-button::after {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.link-button:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.link-button:hover:not(:disabled)::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ==========================================================================
+   Header / footer chrome
+   ========================================================================== */
+
+.site-header {
+  position: absolute;
+  z-index: 9;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  padding: max(26px, env(safe-area-inset-top)) clamp(24px, 4vw, 74px) 0;
+  pointer-events: none;
+}
+
+/* Chrome sits directly on top of the film, so it carries its own scrim. */
+.site-header::before,
+.stage-footer::before {
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  left: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.site-header::before {
+  top: 0;
+  height: 190px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+}
+
+.stage-footer::before {
+  bottom: -24px;
+  height: 130px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+}
+
+.wordmark {
+  pointer-events: auto;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-decoration: none;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.wordmark:hover {
+  opacity: 0.72;
+}
+
+.wordmark span,
+.loading-screen__mark span {
+  color: var(--ink-4);
+}
+
+.header-meta {
+  display: flex;
+  gap: clamp(24px, 4vw, 72px);
+  color: var(--ink-3);
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: var(--micro-tracking);
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.stage-footer {
+  position: absolute;
+  z-index: 8;
+  right: clamp(24px, 4vw, 74px);
+  bottom: max(22px, env(safe-area-inset-bottom));
+  left: clamp(24px, 4vw, 74px);
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-4);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.footer-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72em;
+  white-space: nowrap;
+}
+
+.footer-credit__separator {
+  color: rgba(240, 238, 232, 0.18);
+}
+
+.footer-credit a {
+  position: relative;
+  color: var(--ink-3);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.footer-credit a::after {
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.footer-credit a:hover,
+.footer-credit a:focus-visible {
+  color: var(--ink);
+}
+
+.footer-credit a:hover::after,
+.footer-credit a:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ==========================================================================
+   Story copy
+   ========================================================================== */
+
+.story-copy {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* Display type frequently lands on the bright side of a film frame; a soft
+   directional scrim keeps it readable without dimming the whole shot. */
+.story-copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: -14vh -12vw -16vh -14vw;
+  content: "";
+  pointer-events: none;
+}
+
+.hero-copy::before,
+.final-copy::before,
+.cinematic-copy--surface::before {
+  background: radial-gradient(ellipse 62% 58% at 22% 50%, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0) 72%);
+}
+
+.cinematic-copy--open::before {
+  background: radial-gradient(ellipse 62% 58% at 78% 50%, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0) 72%);
+}
+
+.hero-copy {
+  top: 20%;
+  left: clamp(24px, 5vw, 94px);
+  width: min(47vw, 760px);
+}
+
+.hero-copy h1,
+.final-copy h2 {
+  margin: 0.16em 0 0;
+  font-size: clamp(64px, 8.6vw, 154px);
+  font-weight: 600;
+  letter-spacing: -0.062em;
+  line-height: 0.85;
+  text-transform: uppercase;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.55);
+  text-wrap: balance;
+}
+
+.hero-copy p {
+  max-width: 34ch;
+  margin: 30px 0 0;
+  color: var(--ink-2);
+  font-size: clamp(14px, 1.05vw, 18px);
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+}
+
+.scroll-cue {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(48px, 8vh, 92px);
+  color: var(--ink-3);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.scroll-cue i {
+  position: relative;
+  display: block;
+  width: 42px;
+  height: 1px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.scroll-cue i::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--ink), transparent);
+  transform: translateX(-100%);
+  animation: cue 2.6s var(--ease-in-out) infinite;
+}
+
+@keyframes cue {
+  0%, 12% { transform: translateX(-100%); }
+  58%, 100% { transform: translateX(100%); }
+}
+
+.cinematic-copy {
+  bottom: clamp(84px, 12vh, 132px);
+  left: clamp(24px, 5vw, 94px);
+}
+
+.cinematic-copy--open {
+  right: clamp(24px, 5vw, 94px);
+  left: auto;
+  text-align: right;
+}
+
+.cinematic-copy h2 {
+  margin: 16px 0 20px;
+  font-size: clamp(34px, 4vw, 68px);
+  font-weight: 500;
+  letter-spacing: -0.048em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
+}
+
+.cinematic-copy p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.final-copy {
+  top: 21%;
+  left: clamp(24px, 5vw, 94px);
+  width: min(52vw, 850px);
+}
+
+.final-copy h2 {
+  font-size: clamp(58px, 7.7vw, 138px);
+}
+
+.final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(30px, 5vh, 58px);
+  pointer-events: auto;
+}
+
+.final-actions .button--primary {
+  min-width: 210px;
+}
+
+.final-actions .button--ghost {
+  min-width: 128px;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   Configurator
+   ========================================================================== */
+
+.configurator {
+  position: absolute;
+  z-index: 10;
+  right: clamp(26px, 4.8vw, 92px);
+  bottom: clamp(55px, 8vh, 90px);
+  width: min(396px, 34vw);
+  padding: 28px 28px 30px;
+  border-radius: var(--radius);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0) 38%),
+    var(--surface);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 238, 232, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 30px 80px rgba(0, 0, 0, 0.66);
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform 520ms var(--ease-out),
+    visibility 0s linear 520ms;
+}
+
+/* The corner ticks draw themselves once the panel has settled. */
+.configurator::before,
+.configurator::after {
+  width: 0;
+  height: 0;
+  transition:
+    width 520ms var(--ease-out) 120ms,
+    height 520ms var(--ease-out) 120ms;
+}
+
+.experience-stage[data-chapter="2"] .configurator::before,
+.experience-stage[data-chapter="2"] .configurator::after {
+  width: 18px;
+  height: 18px;
+}
+
+/* Blur is the single most expensive effect on the page; it is opt-in for
+   capable pointers only and dropped entirely on the LOW tier. */
+@supports (backdrop-filter: blur(1px)) {
+  @media (min-width: 768px) {
+    .experience-stage:not([data-quality="low"]) .configurator {
+      background:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 42%),
+        rgba(9, 9, 9, 0.62);
+      backdrop-filter: blur(26px) saturate(115%);
+    }
+  }
+}
+
+.experience-stage[data-chapter="2"] .configurator {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+  transition-delay: 0s;
+}
+
+.configurator__heading {
+  margin-bottom: 20px;
+}
+
+.configurator__heading h2 {
+  margin: 12px 0 8px;
+  font-size: clamp(28px, 2.4vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.048em;
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.configurator__heading p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* Each control block is numbered in its own gutter, the way a parts list on a
+   drawing is numbered. The index comes from a data attribute so the markup
+   stays semantic. */
+.control-group,
+.upload-control {
+  position: relative;
+  padding: 16px 0 18px 28px;
+  border-top: 1px solid var(--hairline);
+}
+
+.control-group::before,
+.upload-control::before {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  content: attr(data-index);
+  color: var(--ink-4);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+/* Label, dotted leader, live readout — one line, like a spec row. */
+.control-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-rule {
+  flex: 1;
+  height: 1px;
+  background-image: radial-gradient(circle, var(--hairline-strong) 0 0.5px, transparent 0.5px);
+  background-size: 4px 1px;
+  background-repeat: repeat-x;
+}
+
+.control-readout {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.variant-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.variant-button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  min-height: 58px;
+  padding: 11px 2px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--ink-4);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+
+/* The selection marker is a rule that draws across the top of the swatch,
+   rather than a filled pill. It reads as a measurement, not a tab. */
+.variant-button::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  content: "";
+  background: var(--accent);
+  transform: translateX(-50%);
+  transition: width var(--dur) var(--ease-out);
+}
+
+/* Same guard as the finish cells: hovering the selected swatch must not dim
+   its label back down the ink ramp. */
+.variant-button:hover:not(:disabled):not([data-active="true"]) {
+  color: var(--ink-2);
+}
+
+.variant-button:hover:not(:disabled) {
+  background-color: rgba(240, 238, 232, 0.04);
+}
+
+.variant-button:hover:not(:disabled):not([data-active="true"])::before {
+  width: 40%;
+}
+
+.variant-button__swatch {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 0 3px rgba(8, 8, 8, 0),
+    0 0 0 4px rgba(231, 228, 220, 0);
+  transform: scale(0.82);
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+.variant-button:hover:not(:disabled) .variant-button__swatch {
+  transform: scale(0.92);
+}
+
+.variant-button[data-active="true"] {
+  color: var(--ink);
+}
+
+.variant-button[data-active="true"]::before {
+  width: 100%;
+}
+
+.variant-button[data-active="true"] .variant-button__swatch {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.32),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.24),
+    0 0 0 3px rgba(8, 8, 8, 0.95),
+    0 0 0 4px var(--accent);
+  transform: scale(1);
+}
+
+/* One plate slides between the three finishes instead of three chunky boxes
+   lighting up independently. */
+.finish-list {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 14px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.finish-list::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% / 3);
+  content: "";
+  /* An illuminated cell rather than a light slab: the selection reads from the
+     accent bar across its head, the way a lit key on a control panel does. */
+  background-color: rgba(240, 238, 232, 0.09);
+  box-shadow:
+    inset 0 2px 0 var(--accent),
+    inset 0 0 0 1px rgba(240, 238, 232, 0.2);
+  transform: translate3d(calc(var(--finish-index, 1) * 100%), 0, 0);
+  transition: transform 440ms var(--ease-out);
+}
+
+.finish-button {
+  position: relative;
+  z-index: 1;
+  min-height: 42px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease-out);
+}
+
+/* The hover selector must exclude the selected cell. A bare `:hover` outranks
+   `[data-active]`, so pointing at the active finish used to repaint its label
+   in the hover colour and bury it in the plate underneath. */
+.finish-button:hover:not(:disabled):not([data-active="true"]) {
+  color: var(--ink);
+}
+
+.finish-button[data-active="true"] {
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Upload
+   ========================================================================== */
+
+.upload-control {
+  padding-bottom: 0;
+}
+
+.upload-control::after {
+  position: absolute;
+  inset: 8px -10px -10px;
+  content: "";
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.upload-control[data-drag="true"]::after {
+  opacity: 0.7;
+}
+
+.upload-control > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-button {
+  width: 100%;
+}
+
+.configurator-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.export-button {
+  width: 100%;
+  gap: 10px;
+  padding-left: 14px;
+}
+
+.export-button .button__icon {
+  min-width: 38px;
+}
+
+.upload-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 12px 0 0;
+}
+
+.upload-file__name {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Specs read as separate stamped fields with their own dividers, so the row can
+   wrap without stranding a fragment of a sentence on its own line. */
+.upload-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 9px;
+  margin: 14px 0 0;
+  color: var(--ink-4);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+/* Field ticks rather than middots: when the row wraps, a leading vertical rule
+   still reads as the start of a field, where a stranded "·" reads as a typo. */
+.upload-note > * {
+  padding-left: 9px;
+  border-left: 1px solid rgba(240, 238, 232, 0.2);
+}
+
+.upload-note > *:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.upload-note a {
+  color: var(--ink-2);
+  text-decoration-color: var(--hairline-strong);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease-out), text-decoration-color var(--dur) var(--ease-out);
+}
+
+.upload-note a:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+
+/* One status element for label loading, upload rejection and UV warnings, so
+   the panel never invents a second visual language for the same event. */
+/* A status row that always occupies its slot and gains a coloured stripe when
+   it has something to say, so the panel never reflows underneath the buttons. */
+.status-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-height: 32px;
+  margin: 10px 0 0;
+  padding-left: 9px;
+  color: var(--ink-3);
+  border-left: 1px solid transparent;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+
+.status-line[data-state="loading"] {
+  border-left-color: var(--hairline-strong);
+}
+
+.status-line[data-state="error"] {
+  color: var(--danger);
+  border-left-color: var(--danger);
+}
+
+.status-line[data-state="notice"] {
+  color: var(--ink-2);
+  border-left-color: var(--ink-4);
+}
+
+.status-line__spinner {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 3px;
+  border: 1px solid rgba(240, 238, 232, 0.22);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 720ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Progress rail
+   ========================================================================== */
+
+/* This rail stands in for the suppressed native scrollbar, so it carries real
+   information: the tick marks sit at the actual chapter boundaries of the
+   timeline (0.17 / 0.425 / 0.675 / 0.925), not at even thirds. */
+.chapter-progress {
+  position: absolute;
+  z-index: 8;
+  top: 50%;
+  right: clamp(18px, 2vw, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  color: var(--ink-4);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.chapter-progress__number {
+  color: var(--ink);
+}
+
+.chapter-progress__track {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 148px;
+  background-image:
+    linear-gradient(rgba(240, 238, 232, 0.14), rgba(240, 238, 232, 0.14)),
+    linear-gradient(var(--ink-4), var(--ink-4)),
+    linear-gradient(var(--ink-4), var(--ink-4)),
+    linear-gradient(var(--ink-4), var(--ink-4)),
+    linear-gradient(var(--ink-4), var(--ink-4));
+  background-size: 1px 100%, 9px 1px, 9px 1px, 9px 1px, 9px 1px;
+  background-position: right top, right 17%, right 42.5%, right 67.5%, right 92.5%;
+  background-repeat: no-repeat;
+}
+
+.chapter-progress__track span {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(231, 228, 220, 0.5);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+}
+
+
+/* ==========================================================================
+   Save-Data prompt / WebGL fallback / loading
+   ========================================================================== */
+
+.data-saver-prompt {
+  position: absolute;
+  z-index: 12;
+  top: 78px;
+  right: clamp(24px, 4vw, 74px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: rgba(10, 10, 10, 0.86);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+
+.data-saver-prompt:hover {
+  border-color: var(--hairline-strong);
+  background: rgba(16, 16, 16, 0.94);
+}
+
+.data-saver-prompt__label {
+  color: var(--ink-3);
+}
+
+.webgl-fallback {
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--page);
+}
+
+.webgl-fallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.webgl-fallback__panel {
+  position: absolute;
+  right: 5vw;
+  bottom: 10vh;
+  width: min(360px, 44vw);
+  padding: 22px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  color: var(--ink-2);
+  background: rgba(10, 10, 10, 0.86);
+  font-size: 13px;
+  line-height: 1.6;
+  pointer-events: auto;
+}
+
+.webgl-fallback__panel p {
+  margin: 12px 0 18px;
+}
+
+.loading-screen {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: var(--ink);
+  background: var(--page);
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease-out), visibility 0s linear var(--dur-slow);
+}
+
+.loading-screen.is-complete {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-screen__mark {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+}
+
+.loading-screen__track {
+  position: relative;
+  display: block;
+  width: 132px;
+  height: 1px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.loading-screen__track i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--ink), transparent);
+  animation: loading 1.2s var(--ease-in-out) infinite;
+}
+
+.loading-screen small {
+  color: var(--ink-4);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+@keyframes loading {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ==========================================================================
+   Debug (development builds only)
+   ========================================================================== */
+
+.debug-reference {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.debug-panel {
+  position: absolute;
+  z-index: 30;
+  top: 66px;
+  left: 18px;
+  display: grid;
+  width: 285px;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #eee;
+  background: rgba(0, 0, 0, 0.86);
+  font-size: 10px;
+}
+
+.debug-panel code,
+.debug-panel label {
+  font-size: 10px;
+}
+
+.debug-panel label {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   Mobile
+   ========================================================================== */
+
+/* Narrow desktop / tablet landscape. The WebGL product only shifts sideways on
+   the desktop profile, and that shift is tuned for wide frames — between these
+   widths the can walks into the display type, so the copy column gives way
+   instead of the render. */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .hero-copy,
+  .final-copy {
+    top: 15%;
+    width: min(56vw, 430px);
+  }
+
+  .hero-copy h1,
+  .final-copy h2 {
+    font-size: clamp(42px, 6.4vw, 72px);
+  }
+
+  .hero-copy p {
+    max-width: 26ch;
+    font-size: 13px;
+  }
+
+  .configurator {
+    width: min(340px, 44vw);
+    padding: 22px 22px 24px;
+  }
+
+  .cinematic-copy h2 {
+    font-size: clamp(30px, 4.6vw, 46px);
+  }
+}
+
+@media (max-width: 767px) {
+  .experience-scroll {
+    height: 760svh;
+    min-height: 760vh;
+  }
+
+  .site-header {
+    padding: max(19px, env(safe-area-inset-top)) 18px 0;
+  }
+
+  .wordmark {
+    font-size: 13px;
+  }
+
+  .header-meta {
+    display: none;
+  }
+
+  .hero-copy {
+    top: 10.5%;
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .hero-copy h1,
+  .final-copy h2 {
+    font-size: clamp(52px, 15.1vw, 72px);
+    line-height: 0.87;
+  }
+
+  .hero-copy p {
+    max-width: 26ch;
+    margin-top: 22px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .scroll-cue {
+    display: none;
+  }
+
+  .story-copy::before {
+    inset: -12vh -24vw;
+    background: radial-gradient(ellipse 78% 56% at 30% 50%, rgba(0, 0, 0, 0.74), rgba(0, 0, 0, 0) 76%);
+  }
+
+  .cinematic-copy {
+    right: 20px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    left: 20px;
+  }
+
+  .cinematic-copy--open {
+    text-align: left;
+  }
+
+  .cinematic-copy h2 {
+    font-size: clamp(34px, 10vw, 44px);
+  }
+
+  .final-copy {
+    top: 14.5%;
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .final-copy h2 {
+    font-size: clamp(49px, 14vw, 66px);
+  }
+
+  .final-actions {
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .final-actions .button--primary {
+    min-width: 0;
+    flex: 1 1 190px;
+  }
+
+  .final-actions .button--ghost {
+    flex: 0 0 auto;
+    min-width: 112px;
+  }
+
+  /* Bottom sheet. The gradient reaches full opacity well before the controls
+     so no control ever sits on a half-transparent band. */
+  .configurator {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 44px 18px calc(30px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    background: linear-gradient(to bottom, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.94) 16%, var(--page) 38%);
+    box-shadow: none;
+  }
+
+  .configurator__heading {
+    margin-bottom: 14px;
+  }
+
+  .configurator__heading h2 {
+    margin-top: 8px;
+    font-size: 30px;
+  }
+
+  .configurator__heading p {
+    font-size: 11px;
+  }
+
+  /* The numbered gutter is kept on mobile — it is the panel's signature — but
+     tightened so the controls still get the full width. */
+  .control-group,
+  .upload-control {
+    padding: 13px 0 14px 22px;
+  }
+
+  .control-group::before,
+  .upload-control::before {
+    top: 15px;
+  }
+
+  .variant-list {
+    gap: 2px;
+    width: 100%;
+    margin-top: 11px;
+  }
+
+  .variant-button {
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 62px;
+    padding: 9px 2px 7px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+
+  .variant-button__swatch {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* The head row now carries its own readout, so the old side-by-side layout
+     printed the finish name twice. Stack it like every other block. */
+  .finish-list {
+    margin-top: 11px;
+  }
+
+  .finish-button {
+    min-height: 46px;
+    padding: 0 6px;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .upload-control {
+    padding-top: 14px;
+  }
+
+  .upload-button {
+    min-height: 50px;
+  }
+
+  .configurator-actions {
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .export-button {
+    min-height: 50px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .upload-note {
+    margin-top: 10px;
+    font-size: 10px;
+  }
+
+  .chapter-progress {
+    right: 12px;
+    gap: 9px;
+  }
+
+  .chapter-progress__track {
+    height: 68px;
+  }
+
+  .stage-footer {
+    right: 18px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: 18px;
+  }
+
+  .stage-footer > span:last-child {
+    display: none;
+  }
+
+  .footer-credit {
+    gap: 0.56em;
+    letter-spacing: 0.12em;
+  }
+
+  .data-saver-prompt {
+    top: 58px;
+    right: 18px;
+    max-width: calc(100% - 36px);
+  }
+
+  .data-saver-prompt__label {
+    display: none;
+  }
+
+  .webgl-fallback__panel {
+    right: 18px;
+    bottom: 76px;
+    left: 18px;
+    width: auto;
+  }
+}
+
+@media (max-width: 767px) and (orientation: landscape) {
+  .experience-scroll {
+    height: 620svh;
+  }
+
+  .hero-copy,
+  .final-copy {
+    top: 20%;
+    width: 48%;
+  }
+
+  .hero-copy h1,
+  .final-copy h2 {
+    font-size: clamp(40px, 8vw, 64px);
+  }
+
+  .configurator {
+    top: 62px;
+    right: 20px;
+    bottom: 30px;
+    left: auto;
+    width: min(360px, 48vw);
+    padding: 16px 18px 24px;
+    overflow-y: auto;
+    background: linear-gradient(to right, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.95) 14%);
+  }
+
+  .configurator__heading p,
+  .upload-note {
+    display: none;
+  }
+
+  .variant-button {
+    min-height: 52px;
+  }
+}
+
+/* Coarse pointers get the full 44px target on every control regardless of
+   viewport width, including tablets that miss the mobile breakpoint. */
+@media (pointer: coarse) {
+  .variant-button,
+  .finish-button,
+  .link-button {
+    min-height: 46px;
+  }
+
+  .link-button {
+    padding: 0 6px;
+  }
+}
+
+html[data-motion="reduced"] .experience-scroll {
+  height: 520svh;
+  min-height: 520vh;
+}
+
+html[data-motion="reduced"] .grain,
+html[data-save-data="true"] .grain {
+  display: none;
+}
+
+@media (min-width: 2000px) {
+  .hero-copy,
+  .final-copy {
+    left: 7vw;
+  }
+
+  .configurator {
+    right: 7vw;
+  }
+}

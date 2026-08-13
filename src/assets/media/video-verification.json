@@ -1,0 +1,50 @@
+[
+  {
+    "name": "can-film-01-desktop.mp4",
+    "bytes": 5426656,
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "duration": 10,
+    "frames": 240,
+    "audio": false,
+    "allIntra": true,
+    "faststart": true
+  },
+  {
+    "name": "can-film-01-mobile.mp4",
+    "bytes": 3141179,
+    "width": 960,
+    "height": 540,
+    "fps": 24,
+    "duration": 10,
+    "frames": 240,
+    "audio": false,
+    "allIntra": true,
+    "faststart": true
+  },
+  {
+    "name": "can-film-02-desktop.mp4",
+    "bytes": 5856978,
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "duration": 10,
+    "frames": 240,
+    "audio": false,
+    "allIntra": true,
+    "faststart": true
+  },
+  {
+    "name": "can-film-02-mobile.mp4",
+    "bytes": 3466989,
+    "width": 960,
+    "height": 540,
+    "fps": 24,
+    "duration": 10,
+    "frames": 240,
+    "audio": false,
+    "allIntra": true,
+    "faststart": true
+  }
+]
