@@ -508,11 +508,11 @@
 .metallic-text {
   background: linear-gradient(
     105deg,
-    #8f9592 0%,
-    #c7c9c3 32%,
-    #e0ded6 50%,
-    #a2a7a3 76%,
-    #858b88 100%
+    #a9afac 0%,
+    #d4d6d1 32%,
+    #ebe9e2 50%,
+    #bcc0bd 76%,
+    #9fa5a2 100%
   );
   background-clip: text;
   color: transparent;
