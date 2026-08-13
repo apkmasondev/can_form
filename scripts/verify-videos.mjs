@@ -5,12 +5,11 @@ import { spawnSync } from 'node:child_process'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mediaDir = resolve(root, 'src/assets/media')
-const expected = [
-  ['can-film-01-desktop.mp4', 1280, 720],
-  ['can-film-01-mobile.mp4', 960, 540],
-  ['can-film-02-desktop.mp4', 1280, 720],
-  ['can-film-02-mobile.mp4', 960, 540],
-]
+const expected = ['can-film-01', 'can-film-02', 'can-film-01-lime', 'can-film-02-lime', 'can-film-01-cherry', 'can-film-02-cherry']
+  .flatMap((stem) => [
+    [`${stem}-desktop.mp4`, 1280, 720],
+    [`${stem}-mobile.mp4`, 960, 540],
+  ])
 
 function probe(file, entries) {
   const result = spawnSync('ffprobe', [

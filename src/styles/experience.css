@@ -505,25 +505,40 @@
   text-wrap: balance;
 }
 
-.hero-copy p {
+.hero-support {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(24px, 3vw, 52px);
+  width: min(100%, 620px);
+  margin-top: clamp(24px, 3.6vh, 38px);
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+
+.hero-support p {
   max-width: 34ch;
-  margin: 30px 0 0;
-  color: var(--ink-2);
-  font-size: clamp(14px, 1.05vw, 18px);
-  letter-spacing: 0.01em;
-  line-height: 1.55;
+  margin: 0;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  line-height: 1.6;
+  text-transform: uppercase;
 }
 
 .scroll-cue {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: clamp(48px, 8vh, 92px);
+  justify-content: flex-end;
+  gap: 12px;
   color: var(--ink-3);
   font-size: var(--micro);
   font-weight: 700;
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .scroll-cue i {
@@ -1291,9 +1306,12 @@
     font-size: clamp(42px, 6.4vw, 72px);
   }
 
-  .hero-copy p {
-    max-width: 26ch;
-    font-size: 13px;
+  .hero-support {
+    width: min(100%, 520px);
+  }
+
+  .hero-support p {
+    max-width: 30ch;
   }
 
   .configurator {
@@ -1336,11 +1354,17 @@
     line-height: 0.87;
   }
 
-  .hero-copy p {
-    max-width: 26ch;
-    margin-top: 22px;
-    font-size: 13px;
-    line-height: 1.55;
+  .hero-support {
+    display: block;
+    width: min(100%, 310px);
+    margin-top: 20px;
+    padding-top: 13px;
+  }
+
+  .hero-support p {
+    max-width: 31ch;
+    font-size: 9px;
+    line-height: 1.65;
   }
 
   .scroll-cue {

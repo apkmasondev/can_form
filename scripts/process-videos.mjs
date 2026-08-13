@@ -17,17 +17,27 @@ const lastFrame = (frames - 1) / fps
 const sources = [
   {
     id: '01',
+    variant: 'noir',
     input: resolve(root, 'Aluminum_can_product_video_202608131716.mp4'),
     start: firstFrame,
     end: lastFrame,
   },
   {
     id: '02',
+    variant: 'noir',
     input: resolve(root, 'Camera_pushing_toward_opening_can_202608131722.mp4'),
     start: firstFrame,
     end: lastFrame,
   },
+  { id: '01', variant: 'lime', input: resolve(root, 'lime1.mp4'), start: firstFrame, end: lastFrame },
+  { id: '02', variant: 'lime', input: resolve(root, 'lime2.mp4'), start: firstFrame, end: lastFrame },
+  { id: '01', variant: 'cherry', input: resolve(root, 'cherry1.mp4'), start: firstFrame, end: lastFrame },
+  { id: '02', variant: 'cherry', input: resolve(root, 'cherry2.mp4'), start: firstFrame, end: lastFrame },
 ]
+
+function outputStem(source) {
+  return `can-film-${source.id}${source.variant === 'noir' ? '' : `-${source.variant}`}`
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' })
@@ -46,12 +56,13 @@ mkdirSync(outputDir, { recursive: true })
 
 for (const source of sources) {
   if (!existsSync(source.input)) throw new Error(`Missing source video: ${source.input}`)
+  const stem = outputStem(source)
 
   for (const rendition of [
     { name: 'desktop', width: 1280, height: 720, crf: 21 },
     { name: 'mobile', width: 960, height: 540, crf: 22 },
   ]) {
-    const output = resolve(outputDir, `can-film-${source.id}-${rendition.name}.mp4`)
+    const output = resolve(outputDir, `${stem}-${rendition.name}.mp4`)
     run('ffmpeg', [
       '-y', '-i', source.input,
       '-map', '0:v:0', '-an', '-map_metadata', '-1',
@@ -67,10 +78,10 @@ for (const source of sources) {
   for (const [position, timestamp] of [['start', source.start], ['end', source.end]]) {
     run('ffmpeg', [
       '-y', '-ss', String(timestamp),
-      '-i', resolve(outputDir, `can-film-${source.id}-desktop.mp4`),
+      '-i', resolve(outputDir, `${stem}-desktop.mp4`),
       '-frames:v', '1', '-an', '-c:v', 'libwebp',
       '-lossless', '0', '-quality', '86', '-compression_level', '6',
-      resolve(outputDir, `can-film-${source.id}-${position}.webp`),
+      resolve(outputDir, `${stem}-${position}.webp`),
     ])
   }
 }

@@ -52,19 +52,26 @@ The two original files remain unchanged in the repository root and are git-ignor
 - `Aluminum_can_product_video_202608131716.mp4`
 - `Camera_pushing_toward_opening_can_202608131722.mp4`
 
+The matching Lime and Cherry masters follow the same rule:
+
+- `lime1.mp4` / `lime2.mp4`
+- `cherry1.mp4` / `cherry2.mp4`
+
 Generate production media with FFmpeg 9+:
 
 ```bash
 npm run media:process
 ```
 
-The cross-platform Node pipeline creates 1280×720 desktop and 960×540 mobile H.264 files, removes audio physically, sets 24 fps, GOP=1 and faststart, extracts the exact first and last frames (0 and 239) as WebP reference frames, then verifies every output. Re-run validation without transcoding with:
+The cross-platform Node pipeline creates 1280×720 desktop and 960×540 mobile H.264 files for Noir, Lime and Cherry, removes audio physically, sets 24 fps, GOP=1 and faststart, extracts the exact first and last frames (0 and 239) as WebP reference frames, then verifies every output. Re-run validation without transcoding with:
 
 ```bash
 npm run media:verify
 ```
 
 The machine-readable report is `src/assets/media/video-verification.json`.
+
+Film variants are switched while the configurator chapter is showing and both cinematic layers are hidden. Film 2 is prioritised for forward scrolling, then Film 1 is prepared for reverse scrolling. Only the active device rendition and selected identity are requested; the remaining variants stay as URL entries in the bundle and are not downloaded. `Custom` always uses the original Noir films. `Zero` currently follows the same fallback until its dedicated masters are added.
 
 ## Model and UV
 

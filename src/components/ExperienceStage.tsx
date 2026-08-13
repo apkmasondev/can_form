@@ -1,12 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react'
-import film1Desktop from '../assets/media/can-film-01-desktop.mp4'
-import film1Mobile from '../assets/media/can-film-01-mobile.mp4'
-import film2Desktop from '../assets/media/can-film-02-desktop.mp4'
-import film2Mobile from '../assets/media/can-film-02-mobile.mp4'
-import film1Start from '../assets/media/can-film-01-start.webp'
-import film1End from '../assets/media/can-film-01-end.webp'
-import film2Start from '../assets/media/can-film-02-start.webp'
-import film2End from '../assets/media/can-film-02-end.webp'
+import { filmVariantFor, filmVariants, type FilmSequenceAssets, type FilmVariantId } from '../config/films'
 import { activeChapter, calibrationPoints, chapterCount, clamp, filmFps, inverseLerp, rangeOpacity, smoothstep, timeline } from '../config/timeline'
 import type { FinishId, VariantId } from '../config/variants'
 import type { ExperiencePreferences, QualityTier } from '../hooks/usePreferences'
@@ -111,8 +104,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
   const previousTime = useRef(performance.now())
   const currentChapter = useRef(-1)
   const pageVisible = useRef(!document.hidden)
-  const film1Assigned = useRef(false)
-  const film2Assigned = useRef(false)
+  const film1Assigned = useRef<string | null>(null)
+  const film2Assigned = useRef<string | null>(null)
   const film1LastFrame = useRef(-1)
   const film2LastFrame = useRef(-1)
   const film1VideoRef = useRef<HTMLVideoElement>(null)
@@ -131,29 +124,50 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
   const chapterNumberRef = useRef<HTMLSpanElement>(null)
   const chapterStatusRef = useRef<HTMLParagraphElement>(null)
   const variantRef = useRef<VariantId>(selectedVariant)
+  const requestedFilmVariant = useRef<FilmVariantId>(filmVariantFor(selectedVariant))
   const debugLastUpdate = useRef(0)
   const debugEnabled = import.meta.env.DEV && new URLSearchParams(location.search).get('debug') === '1'
   const [snapshot, setSnapshot] = useState<DebugSnapshot>({ ...emptySnapshot, dpr: preferences.dpr, quality: preferences.quality })
 
-  useEffect(() => {
-    variantRef.current = selectedVariant
-  }, [selectedVariant])
+  const setPosterSource = (image: HTMLImageElement | null, source: string) => {
+    if (!image) return
+    image.dataset.src = source
+    if (image.getAttribute('src') !== source) image.src = source
+  }
 
-  const assignVideoSource = (video: HTMLVideoElement | null, kind: 1 | 2) => {
-    if (kind === 2) {
-      if (film2StartPosterRef.current && !film2StartPosterRef.current.getAttribute('src')) film2StartPosterRef.current.src = film2Start
-      if (film2EndPosterRef.current && !film2EndPosterRef.current.getAttribute('src')) film2EndPosterRef.current.src = film2End
-    }
+  const assignVideoSource = (video: HTMLVideoElement | null, kind: 1 | 2, requested = filmVariantFor(variantRef.current)) => {
+    const sequence: FilmSequenceAssets = kind === 1 ? filmVariants[requested].one : filmVariants[requested].two
+    setPosterSource(kind === 1 ? film1StartPosterRef.current : film2StartPosterRef.current, sequence.start)
+    setPosterSource(kind === 1 ? film1EndPosterRef.current : film2EndPosterRef.current, sequence.end)
     if (!video || preferences.reducedMotion || !cinematicEnabled) return
     const assigned = kind === 1 ? film1Assigned : film2Assigned
-    if (assigned.current) return
-    assigned.current = true
+    const sourceKey = `${requested}-${preferences.mobile ? 'mobile' : 'desktop'}`
+    if (assigned.current === sourceKey) return
+    assigned.current = sourceKey
+    const layer = kind === 1 ? film1LayerRef.current : film2LayerRef.current
+    const lastFrame = kind === 1 ? film1LastFrame : film2LastFrame
+    lastFrame.current = -1
+    layer?.classList.remove('has-error')
+    video.classList.remove('is-frame-ready')
     video.preload = 'auto'
-    video.src = kind === 1
-      ? preferences.mobile ? film1Mobile : film1Desktop
-      : preferences.mobile ? film2Mobile : film2Desktop
+    video.src = preferences.mobile ? sequence.mobile : sequence.desktop
     video.load()
   }
+
+  useEffect(() => {
+    variantRef.current = selectedVariant
+    const next = filmVariantFor(selectedVariant)
+    stageRef.current?.setAttribute('data-film-variant', next)
+    if (requestedFilmVariant.current === next) return
+    requestedFilmVariant.current = next
+
+    // The configurator sits between the films. Prioritise film 2 for the
+    // natural forward journey, then prepare film 1 shortly afterwards so a
+    // reverse scroll is also seamless. Both layers are hidden during the swap.
+    assignVideoSource(film2VideoRef.current, 2, next)
+    const reverseLoad = window.setTimeout(() => assignVideoSource(film1VideoRef.current, 1, next), 320)
+    return () => window.clearTimeout(reverseLoad)
+  }, [selectedVariant, cinematicEnabled, preferences.mobile, preferences.reducedMotion])
 
   useImperativeHandle(forwardedRef, () => ({
     setTexture: async (url, id) => {
@@ -365,8 +379,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
           layerRef={film1LayerRef}
           startPosterRef={film1StartPosterRef}
           endPosterRef={film1EndPosterRef}
-          startPoster={film1Start}
-          endPoster={film1End}
+          startPoster={filmVariants.noir.one.start}
+          endPoster={filmVariants.noir.one.end}
           onReady={() => markVideoReady(film1VideoRef.current)}
           onError={() => markVideoError(film1LayerRef.current)}
         />
@@ -376,8 +390,8 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
           layerRef={film2LayerRef}
           startPosterRef={film2StartPosterRef}
           endPosterRef={film2EndPosterRef}
-          startPoster={film2Start}
-          endPoster={film2End}
+          startPoster={filmVariants.noir.two.start}
+          endPoster={filmVariants.noir.two.end}
           onReady={() => markVideoReady(film2VideoRef.current)}
           onError={() => markVideoError(film2LayerRef.current)}
           deferPosters
@@ -394,8 +408,10 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
         <div ref={heroCopyRef} className="story-copy hero-copy">
           <span className="eyebrow">01 / Product, reformed</span>
           <h1>Your label.<br />In motion.</h1>
-          <p>Form, finish and identity — made tangible.</p>
-          <span className="scroll-cue"><i /> Scroll to explore</span>
+          <div className="hero-support">
+            <p>A configurable packaging system — rendered in real time.</p>
+            <span className="scroll-cue">Scroll to explore <i /></span>
+          </div>
         </div>
 
         <div ref={surfaceCopyRef} className="story-copy cinematic-copy cinematic-copy--surface">
