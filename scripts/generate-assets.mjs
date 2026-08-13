@@ -159,6 +159,69 @@ function mirroredShape(target, front, half) {
   return target
 }
 
+/**
+ * Pushes a closed contour outwards by a constant distance along its own
+ * normals. A uniform scale would offset the far end of a teardrop much more
+ * than its nose; a true offset keeps the band an even width all the way round.
+ * The contour is authored counter-clockwise, so the outward normal of a tangent
+ * (tx, ty) is (ty, -tx).
+ */
+function offsetContour(points, distance) {
+  const count = points.length
+  return points.map((point, index) => {
+    const previous = points[(index - 1 + count) % count]
+    const next = points[(index + 1) % count]
+    const tx = next.x - previous.x
+    const ty = next.y - previous.y
+    const length = Math.hypot(tx, ty) || 1
+    return new THREE.Vector2(point.x + (ty / length) * distance, point.y - (tx / length) * distance)
+  })
+}
+
+/**
+ * Sweeps a cross-section around a closed contour to make an embossed rib.
+ *
+ * `rows` are `{ distance, height }` pairs: how far the row sits outside the
+ * contour, and how high above the panel. The loop shares its seam vertices
+ * (indices wrap with a modulo) so `computeVertexNormals` produces a continuous
+ * shade the whole way round instead of a crease where the ends meet.
+ */
+function contourRib(contour, rows, { originZ, baseY, name }) {
+  const ringCount = contour.length
+  const positions = []
+  const uvs = []
+  const indices = []
+
+  rows.forEach((row, rowIndex) => {
+    const ring = offsetContour(contour, row.distance)
+    ring.forEach((point, columnIndex) => {
+      // Contour space maps onto the can end the same way the tear panel does.
+      positions.push(point.x, baseY + row.height, originZ - point.y)
+      uvs.push(columnIndex / ringCount, rowIndex / (rows.length - 1))
+    })
+  })
+
+  for (let row = 0; row < rows.length - 1; row += 1) {
+    for (let column = 0; column < ringCount; column += 1) {
+      const next = (column + 1) % ringCount
+      const a = row * ringCount + column
+      const b = row * ringCount + next
+      const c = (row + 1) * ringCount + column
+      const d = (row + 1) * ringCount + next
+      indices.push(a, c, b, b, c, d)
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  geometry.computeBoundingSphere()
+  geometry.name = name
+  return geometry
+}
+
 /** Thickness runs along local +z, then the part is laid flat onto the can end. */
 function layFlat(geometry) {
   geometry.computeBoundingBox()
@@ -221,11 +284,27 @@ function createTabGeometry() {
 function tearPanelShape(scale = 1) {
   const point = (x, y) => [x * scale, y * scale]
   const half = [
-    [...point(0.15, -0.3), ...point(0.255, -0.2), ...point(0.26, -0.075)],
-    [...point(0.265, 0.075), ...point(0.2, 0.225), ...point(0.1, 0.268)],
-    [...point(0.055, 0.288), ...point(0.02, 0.29), ...point(0, 0.29)],
+    [...point(0.155, -0.285), ...point(0.272, -0.2), ...point(0.28, -0.085)],
+    [...point(0.288, 0.055), ...point(0.222, 0.185), ...point(0.115, 0.228)],
+    [...point(0.062, 0.248), ...point(0.023, 0.262), ...point(0, 0.265)],
   ]
-  return mirroredShape(new THREE.Shape(), point(0, -0.3), half)
+  return mirroredShape(new THREE.Shape(), point(0, -0.285), half)
+}
+
+/**
+ * The large panel emboss: the crease pressed into the end that encloses the
+ * whole tab-and-opening assembly, wide and round at the rim end and tapering
+ * behind the finger ring. Authored directly in world terms — local `y` here is
+ * negated world `z` — because it has to be reasoned about against the tab, the
+ * opening and the countersink at once rather than against the score alone.
+ */
+function panelEmbossShape() {
+  return mirroredShape(new THREE.Shape(), [0, -0.6], [
+    [0.22, -0.6, 0.37, -0.5, 0.395, -0.32],
+    [0.41, -0.1, 0.39, 0.12, 0.35, 0.3],
+    [0.31, 0.43, 0.22, 0.54, 0.1, 0.552],
+    [0.05, 0.558, 0.018, 0.555, 0, 0.55],
+  ])
 }
 
 const scene = new THREE.Scene()
@@ -250,8 +329,14 @@ const panelY = 2.4
 const panelRadius = 0.66
 // Hinge sits just in front of the rivet; the panel runs from there out towards
 // the countersink, which is the layout the cinematic hands over.
+// The opening is a teardrop, not an oval: broad and round at the rim end,
+// tapering to a narrow nose at the hinge. It is pulled in just far enough that
+// the reinforcing bead has a clear band to run in between its score line and
+// the countersink.
+const tearScale = 0.91
+const tearReach = 0.265 * tearScale
 const tearHingeZ = 0.02
-const tearCentreZ = tearHingeZ + 0.29
+const tearCentreZ = tearHingeZ + tearReach
 const rivetZ = -0.1
 
 // Countersink + chuck wall + seam, authored centre-out so the winding stays
@@ -280,15 +365,23 @@ topRim.rotation.x = Math.PI / 2
 topRim.position.y = panelY + 0.018
 scene.add(topRim)
 
-// Flat panel with the score line cut out. The cut-out is the tear panel scaled
-// up slightly, so the residual gap reads as the score itself.
+// The tab and the opening sit in a shallow well, as they do on a real end, so
+// the panel is built as three parts: the flat ring outside the emboss, the
+// sunken floor inside it, and the rib that walls the two together.
+const embossContour = panelEmbossShape().getPoints(22)
+// getPoints closes the loop by repeating the first point; the rib wraps its own
+// indices, so the duplicate has to go or the seam gets a zero-width quad.
+if (embossContour.length > 1 && embossContour[0].distanceTo(embossContour.at(-1)) < 1e-6) embossContour.pop()
+
+const wellDepth = 0.008
+const wellY = panelY - wellDepth
+// The floor sits a hair under the rib's inner row so the two overlap in plan
+// without ever sharing a plane.
+const wellFloorY = wellY - 0.0005
+
+// Flat ring: everything outside the emboss shoulder.
 const panelShape = ellipseShape(panelRadius, panelRadius)
-// 1.3% oversize leaves a ~0.004 unit gap: at this camera distance that reads as
-// the score line itself. A wider gap turned into a black outline around the lid.
-const scoreHole = new THREE.Path(
-  tearPanelShape(1.013).getPoints(28).map((point) => point.clone().add(new THREE.Vector2(0, -tearCentreZ))),
-)
-panelShape.holes.push(scoreHole)
+panelShape.holes.push(new THREE.Path(offsetContour(embossContour, 0.03)))
 
 const topPanel = new THREE.Mesh(
   new THREE.ExtrudeGeometry(panelShape, { depth: 0.016, bevelEnabled: false, curveSegments: 84 }),
@@ -299,6 +392,24 @@ topPanel.geometry.name = 'Can_End_Panel'
 layFlat(topPanel.geometry)
 topPanel.position.y = panelY - 0.016
 scene.add(topPanel)
+
+// Sunken floor, carrying the score line. 1.3% oversize on the cut-out leaves a
+// ~0.004 unit gap, which at this camera distance reads as the score itself; a
+// wider gap turned into a black outline around the lid.
+const wellShape = new THREE.Shape(offsetContour(embossContour, -0.028))
+wellShape.holes.push(new THREE.Path(
+  tearPanelShape(1.013).getPoints(28).map((point) => point.clone().add(new THREE.Vector2(0, -tearCentreZ))),
+))
+
+const panelWell = new THREE.Mesh(
+  new THREE.ExtrudeGeometry(wellShape, { depth: 0.01, bevelEnabled: false, curveSegments: 28 }),
+  aluminumMaterial,
+)
+panelWell.name = 'PanelWell'
+panelWell.geometry.name = 'Can_End_Panel_Well'
+layFlat(panelWell.geometry)
+panelWell.position.y = wellFloorY - 0.01
+scene.add(panelWell)
 
 // Dark interior cup: without it the score opening looks straight through the
 // single-sided body shell to the far wall.
@@ -319,21 +430,52 @@ scene.add(innerOpening)
 // Tear panel, hinged at its narrow end just in front of the rivet.
 const lidPivot = new THREE.Group()
 lidPivot.name = 'LidPivot'
-lidPivot.position.set(0, panelY, tearHingeZ)
+lidPivot.position.set(0, wellFloorY, tearHingeZ)
 const tearPanel = new THREE.Mesh(
   layFlat(new THREE.ExtrudeGeometry(tearPanelShape(), { depth: 0.013, bevelEnabled: false, curveSegments: 28 })),
   aluminumMaterial,
 )
 tearPanel.name = 'ScorePanel'
 tearPanel.geometry.name = 'Can_End_Tear_Panel'
-tearPanel.position.set(0, -0.013, 0.29)
+tearPanel.position.set(0, -0.013, tearReach)
 lidPivot.add(tearPanel)
 scene.add(lidPivot)
+
+// The embossed rib around the opening. On a real end this is not a circle
+// concentric with the panel — it follows the score, an offset teardrop ringing
+// the tear panel, and it is what stops the panel reading as a flat disc.
+//
+// Both edge rows finish *below* the panel plane so they are buried inside the
+// 0.016-thick panel slab: no coplanar faces, so no z-fighting and no seam where
+// the rib meets the flat. The crest is 0.007 units, about 0.25 mm here.
+// The wall between the flat ring and the well. It meets the panel exactly at
+// its cut-out (distance 0.030, height 0) and runs on below it, so the two
+// surfaces share an edge rather than a plane; then it lifts into a shallow lip
+// before rolling down into the floor, which is what catches the light along the
+// crease on a real end.
+const panelEmboss = new THREE.Mesh(
+  contourRib(
+    embossContour,
+    // Ordered inner row first: the sweep direction sets the facing, and running
+    // it outer-to-inner turns the whole band away from the camera.
+    [
+      { distance: -0.04, height: -wellDepth },
+      { distance: -0.012, height: -0.005 },
+      { distance: 0.012, height: 0.0016 },
+      { distance: 0.03, height: 0 },
+      { distance: 0.05, height: -0.0015 },
+    ],
+    { originZ: 0, baseY: panelY, name: 'Can_End_Panel_Emboss' },
+  ),
+  aluminumMaterial,
+)
+panelEmboss.name = 'PanelEmboss'
+scene.add(panelEmboss)
 
 const rivet = new THREE.Mesh(new THREE.SphereGeometry(0.03, 24, 8, 0, Math.PI * 2, 0, Math.PI / 2), aluminumMaterial)
 rivet.name = 'Rivet'
 rivet.scale.y = 0.8
-rivet.position.set(0, panelY - 0.002, rivetZ)
+rivet.position.set(0, wellFloorY - 0.002, rivetZ)
 scene.add(rivet)
 
 // The tab is authored at unit size and scaled in plan only, so its thickness
@@ -342,7 +484,8 @@ scene.add(rivet)
 const tabScale = 0.85
 const tabPivot = new THREE.Group()
 tabPivot.name = 'TabPivot'
-tabPivot.position.set(0, panelY + 0.004, rivetZ)
+// Sits a touch proud of the panel so the embossed rib passes cleanly underneath.
+tabPivot.position.set(0, wellFloorY + 0.01, rivetZ)
 const tab = new THREE.Mesh(createTabGeometry(), aluminumMaterial)
 tab.name = 'Tab'
 tab.scale.set(tabScale, 1, tabScale)

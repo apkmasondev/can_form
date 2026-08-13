@@ -1,5 +1,5 @@
 {
-  "triangles": 38184,
+  "triangles": 40998,
   "meshes": [
     {
       "name": "Body",
@@ -15,7 +15,11 @@
     },
     {
       "name": "TopPanel",
-      "triangles": 1344
+      "triangles": 1374
+    },
+    {
+      "name": "PanelWell",
+      "triangles": 1376
     },
     {
       "name": "InnerOpening",
@@ -24,6 +28,10 @@
     {
       "name": "ScorePanel",
       "triangles": 668
+    },
+    {
+      "name": "PanelEmboss",
+      "triangles": 1408
     },
     {
       "name": "Rivet",

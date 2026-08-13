@@ -38,7 +38,7 @@ The UI is built as a product spec sheet rather than a card layout:
 - Two paused video elements scrubbed at their native 24 fps.
 - WebGL/MP4 calibration states for hero, macro, full-can, top and final views.
 - Direct Three.js rendering is lazy-loaded after the React shell.
-- Meshopt-compressed GLB with separate `Body`, `Top`, `TopPanel`, `Rim`, `Rivet`, `ScorePanel`, `Tab`, `InnerOpening`, `Bottom` and `BottomRim` nodes.
+- Meshopt-compressed GLB with separate `Body`, `Top`, `TopPanel`, `PanelWell`, `PanelEmboss`, `Rim`, `Rivet`, `ScorePanel`, `Tab`, `InnerOpening`, `Bottom` and `BottomRim` nodes.
 - Shader-level label crossfade without duplicate meshes or z-fighting.
 - Procedural, anti-aliased radial brushing on the lid with no texture download or extra draw call.
 - A damped desktop-only configurator key light that follows the pointer; touch, reduced-motion and mobile profiles skip it.
@@ -81,16 +81,19 @@ Regenerate the model, label textures, favicon and OG asset with:
 npm run assets:generate
 ```
 
-The procedural build creates `src/assets/models/can-form.glb` and then compresses it with Meshopt. The body is a profiled surface of revolution, not a `CylinderGeometry` placeholder. Current geometry is 38,184 triangles; the report is in `src/assets/models/model-report.json`.
+The procedural build creates `src/assets/models/can-form.glb` and then compresses it with Meshopt. The body is a profiled surface of revolution, not a `CylinderGeometry` placeholder. Current geometry is 40,998 triangles; the report is in `src/assets/models/model-report.json`.
 
 Surfaces of revolution carry analytic normals derived from the profile tangent rather than face-averaged ones, so the duplicated rear seam column of the body shades continuously and the shoulders stay smooth at 64 height rows.
 
 The can end is modelled as a real 206-style end rather than a flat lid:
 
-- `Rim` double seam curl, `Top` chuck wall and countersink groove, `TopPanel` flat panel.
-- `ScorePanel` is the scored tear panel, cut out of `TopPanel` with a ~0.004 unit gap that reads as the score line, hinged at its narrow end on `LidPivot`.
+- `Rim` double seam curl, `Top` chuck wall and countersink groove.
+- The panel is pressed, not flat. `TopPanel` is the outer ring; `PanelEmboss` is the crease walling it in; `PanelWell` is the shallow recess inside, 0.008 units lower, holding the tab and the opening the way a real end does. The emboss contour is a teardrop enclosing the whole assembly — wide at the rim end, tapering behind the finger ring — not a circle concentric with the panel.
+- `ScorePanel` is the scored tear panel, cut out of `PanelWell` with a ~0.004 unit gap that reads as the score line, hinged at its narrow end on `LidPivot`.
 - `Tab` is a stay-on-tab ring pull on `TabPivot` at the `Rivet`, nose forward over the hinge, finger ring aft.
 - `InnerOpening` is the dark interior cup seen through the opening.
+
+Every pressed feature is swept by `contourRib`, which offsets a closed contour along its own normals rather than scaling it, so the band keeps an even width around a teardrop. Its rows must be ordered inner-first: the sweep direction sets the facing, and running outer-to-inner turns the whole band away from the camera. Adjoining surfaces are separated by fractions of a unit in height rather than meeting coplanar, which is what keeps the end free of z-fighting.
 
 Both pivots are driven from `updateProduct` in `src/webgl/CanExperience.ts` and are fully travelled by progress `0.928`, where film 2 cuts away on an already-open can. The `0.92` camera state, the tab plan size and the tear panel size are all calibrated against `src/assets/media/can-film-02-end.webp`; changing one without the others breaks the hand-off.
 
