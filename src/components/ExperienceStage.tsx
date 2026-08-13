@@ -437,7 +437,7 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
 
         <div ref={heroCopyRef} className="story-copy hero-copy">
           <span className="eyebrow">01 / Product, reformed</span>
-          <h1>Your label.<br />In motion.</h1>
+          <h1>Your label.<br /><span className="metallic-text">In motion.</span></h1>
           <div className="hero-support">
             <p>A configurable packaging system — rendered in real time.</p>
             <span className="scroll-cue">Scroll to explore <i /></span>
@@ -458,7 +458,7 @@ export const ExperienceStage = forwardRef<StageHandle, ExperienceStageProps>(fun
 
         <div ref={finalCopyRef} className="story-copy final-copy">
           <span className="eyebrow">05 / Ready to pour</span>
-          <h2>Product,<br />made interactive.</h2>
+          <h2>Product,<br />made <span className="metallic-text">interactive.</span></h2>
           <div className="final-actions">
             <a className="button button--primary" href="mailto:hello@canform.studio">
               <span>Start a project</span>
