@@ -543,9 +543,9 @@ writeFileSync(resolve(modelDir, 'model-report.json'), `${JSON.stringify({ triang
 
 const variants = [
   { id: 'noir', name: 'NOIR', code: '01', background: '#101112', ink: '#f1efe8', accent: '#aeb4b0', note: 'MINERAL / 00' },
-  { id: 'lime', name: 'LIME', code: '02', background: '#a8d80d', ink: '#12150d', accent: '#e9ffc3', note: 'CITRUS / 02' },
-  { id: 'cherry', name: 'CHERRY', code: '03', background: '#771427', ink: '#f6d7d0', accent: '#dc6a75', note: 'TART / 03' },
-  { id: 'zero', name: 'ZERO', code: '00', background: '#ddd8ce', ink: '#171816', accent: '#a8a39a', note: 'PURE / 00' },
+  { id: 'lime', name: 'LIME', code: '02', background: '#B9E23C', ink: '#12150d', accent: '#e9ffc3', note: 'CITRUS / 02' },
+  { id: 'cherry', name: 'CHERRY', code: '03', background: '#B73245', ink: '#f6d7d0', accent: '#dc6a75', note: 'TART / 03' },
+  { id: 'zero', name: 'ZERO', code: '00', background: '#CFE5F7', ink: '#171816', accent: '#a8a39a', note: 'PURE / 00' },
 ]
 
 function labelSvg(variant) {

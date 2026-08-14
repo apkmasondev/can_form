@@ -22,9 +22,9 @@ export type CanVariant = {
 
 export const variants: CanVariant[] = [
   { id: 'noir', name: 'Noir', edition: 'Mineral / 01', color: '#171819', texture: { desktop: noirDesktop, mobile: noirMobile }, roughness: 0.31, metalness: 0.64 },
-  { id: 'lime', name: 'Lime', edition: 'Citrus / 02', color: '#a8d80d', texture: { desktop: limeDesktop, mobile: limeMobile }, roughness: 0.36, metalness: 0.56 },
-  { id: 'cherry', name: 'Cherry', edition: 'Tart / 03', color: '#771427', texture: { desktop: cherryDesktop, mobile: cherryMobile }, roughness: 0.34, metalness: 0.58 },
-  { id: 'zero', name: 'Zero', edition: 'Pure / 00', color: '#ddd8ce', texture: { desktop: zeroDesktop, mobile: zeroMobile }, roughness: 0.3, metalness: 0.62 },
+  { id: 'lime', name: 'Lime', edition: 'Citrus / 02', color: '#B9E23C', texture: { desktop: limeDesktop, mobile: limeMobile }, roughness: 0.36, metalness: 0.56 },
+  { id: 'cherry', name: 'Cherry', edition: 'Tart / 03', color: '#B73245', texture: { desktop: cherryDesktop, mobile: cherryMobile }, roughness: 0.34, metalness: 0.58 },
+  { id: 'zero', name: 'Zero', edition: 'Pure / 00', color: '#CFE5F7', texture: { desktop: zeroDesktop, mobile: zeroMobile }, roughness: 0.3, metalness: 0.62 },
 ]
 
 export const finishes: Record<FinishId, { label: string; roughness: number; metalness: number; clearcoat: number }> = {
