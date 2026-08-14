@@ -22,9 +22,17 @@ import cherry2Desktop from '../assets/media/can-film-02-cherry-desktop.mp4'
 import cherry2Mobile from '../assets/media/can-film-02-cherry-mobile.mp4'
 import cherry2Start from '../assets/media/can-film-02-cherry-start.webp'
 import cherry2End from '../assets/media/can-film-02-cherry-end.webp'
+import zero1Desktop from '../assets/media/can-film-01-zero-desktop.mp4'
+import zero1Mobile from '../assets/media/can-film-01-zero-mobile.mp4'
+import zero1Start from '../assets/media/can-film-01-zero-start.webp'
+import zero1End from '../assets/media/can-film-01-zero-end.webp'
+import zero2Desktop from '../assets/media/can-film-02-zero-desktop.mp4'
+import zero2Mobile from '../assets/media/can-film-02-zero-mobile.mp4'
+import zero2Start from '../assets/media/can-film-02-zero-start.webp'
+import zero2End from '../assets/media/can-film-02-zero-end.webp'
 import type { VariantId } from './variants'
 
-export type FilmVariantId = 'noir' | 'lime' | 'cherry'
+export type FilmVariantId = 'noir' | 'lime' | 'cherry' | 'zero'
 
 export type FilmSequenceAssets = {
   desktop: string
@@ -51,11 +59,14 @@ export const filmVariants: Record<FilmVariantId, FilmVariantAssets> = {
     one: { desktop: cherry1Desktop, mobile: cherry1Mobile, start: cherry1Start, end: cherry1End },
     two: { desktop: cherry2Desktop, mobile: cherry2Mobile, start: cherry2Start, end: cherry2End },
   },
+  zero: {
+    one: { desktop: zero1Desktop, mobile: zero1Mobile, start: zero1Start, end: zero1End },
+    two: { desktop: zero2Desktop, mobile: zero2Mobile, start: zero2Start, end: zero2End },
+  },
 }
 
-// Until dedicated Zero films exist, every non-rendered identity deliberately
-// falls back to the original Noir cinematics. Custom artwork always follows
-// this path because arbitrary user uploads cannot have a pre-rendered film.
+// Custom artwork deliberately falls back to the original Noir cinematics
+// because an arbitrary uploaded label cannot have a pre-rendered film.
 export function filmVariantFor(variant: VariantId): FilmVariantId {
-  return variant === 'lime' || variant === 'cherry' ? variant : 'noir'
+  return variant === 'lime' || variant === 'cherry' || variant === 'zero' ? variant : 'noir'
 }

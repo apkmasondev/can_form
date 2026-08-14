@@ -33,6 +33,8 @@ const sources = [
   { id: '02', variant: 'lime', input: resolve(root, 'lime2.mp4'), start: firstFrame, end: lastFrame },
   { id: '01', variant: 'cherry', input: resolve(root, 'cherry1.mp4'), start: firstFrame, end: lastFrame },
   { id: '02', variant: 'cherry', input: resolve(root, 'cherry2.mp4'), start: firstFrame, end: lastFrame },
+  { id: '01', variant: 'zero', input: resolve(root, 'zero1.mp4'), start: firstFrame, end: lastFrame },
+  { id: '02', variant: 'zero', input: resolve(root, 'zero2.mp4'), start: firstFrame, end: lastFrame },
 ]
 
 function outputStem(source) {

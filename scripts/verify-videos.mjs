@@ -5,7 +5,16 @@ import { spawnSync } from 'node:child_process'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mediaDir = resolve(root, 'src/assets/media')
-const expected = ['can-film-01', 'can-film-02', 'can-film-01-lime', 'can-film-02-lime', 'can-film-01-cherry', 'can-film-02-cherry']
+const expected = [
+  'can-film-01',
+  'can-film-02',
+  'can-film-01-lime',
+  'can-film-02-lime',
+  'can-film-01-cherry',
+  'can-film-02-cherry',
+  'can-film-01-zero',
+  'can-film-02-zero',
+]
   .flatMap((stem) => [
     [`${stem}-desktop.mp4`, 1280, 720],
     [`${stem}-mobile.mp4`, 960, 540],
