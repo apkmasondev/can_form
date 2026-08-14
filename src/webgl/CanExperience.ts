@@ -632,13 +632,13 @@ export class CanExperience {
 
     // Film 1 is always the original Noir sequence, so its early hand-off keeps
     // the neutralisation used by the initial campaign. Film 2 now has matching
-    // Noir, Lime and Cherry renders: those identities must retain their colour
-    // right through the cut. Only Zero and arbitrary Custom artwork use the
-    // deliberate Noir fallback and therefore neutralise before Film 2.
+    // Noir, Lime, Cherry and Zero renders, so those identities retain their
+    // colour through the cut. Arbitrary Custom artwork still uses the deliberate
+    // Noir fallback and therefore neutralises before Film 2.
     let printStrength = 1
     if (progress > 0.115 && progress < 0.43) {
       printStrength = 1 - smoothstep(0.115, 0.16, progress) + smoothstep(0.405, 0.445, progress)
-    } else if ((this.activeVariant === 'zero' || this.activeVariant === 'custom') && progress >= 0.625 && progress < 0.96) {
+    } else if (this.activeVariant === 'custom' && progress >= 0.625 && progress < 0.96) {
       printStrength = 1 - smoothstep(0.625, 0.675, progress) + smoothstep(0.92, 0.965, progress)
     }
     this.printStrength = clamp(printStrength)

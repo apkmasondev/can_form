@@ -543,9 +543,11 @@ writeFileSync(resolve(modelDir, 'model-report.json'), `${JSON.stringify({ triang
 
 const variants = [
   { id: 'noir', name: 'NOIR', code: '01', background: '#101112', ink: '#f1efe8', accent: '#aeb4b0', note: 'MINERAL / 00' },
-  { id: 'lime', name: 'LIME', code: '02', background: '#B9E23C', ink: '#12150d', accent: '#e9ffc3', note: 'CITRUS / 02' },
-  { id: 'cherry', name: 'CHERRY', code: '03', background: '#B73245', ink: '#f6d7d0', accent: '#dc6a75', note: 'TART / 03' },
-  { id: 'zero', name: 'ZERO', code: '00', background: '#CFE5F7', ink: '#171816', accent: '#a8a39a', note: 'PURE / 00' },
+  // These print colors compensate for PBR lighting and ACES tone mapping.
+  // The UI swatches retain the campaign reference colors from variants.ts.
+  { id: 'lime', name: 'LIME', code: '02', background: '#546C10', ink: '#12150d', accent: '#e9ffc3', note: 'CITRUS / 02' },
+  { id: 'cherry', name: 'CHERRY', code: '03', background: '#561019', ink: '#f6d7d0', accent: '#dc6a75', note: 'TART / 03' },
+  { id: 'zero', name: 'ZERO', code: '00', background: '#526F84', ink: '#171816', accent: '#a8a39a', note: 'PURE / 00' },
 ]
 
 function labelSvg(variant) {
